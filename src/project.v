@@ -16,7 +16,7 @@ module tt_um_uwasic_onboarding_mohamed_bekdach (
     input  wire       rst_n     // reset_n - low to reset
 
 
-    / Add this inside the module block
+  // Add this inside the module block
   assign uio_oe = 8'hFF; // Set all IOs to output
   
   // Create wires to refer to the values of the registers
