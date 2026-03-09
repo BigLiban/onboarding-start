@@ -53,6 +53,10 @@ always @(posedge clk or negedge rst_n) begin
         dataBuffer <= 16'b0;
         transaction_counter <= 5'b1;
         transaction_complete <= 1'b0;
+        old_nCS             <= 1'b1;  // active-low nCS
+        nCS_posedge         <= 1'b0;
+        old_SCLK            <= 1'b0;
+        SCLK_posedge        <= 1'b0;
     end else if(~nCS) begin
         if (SCLK_posedge) begin
             transaction_complete <= 1'b0;
