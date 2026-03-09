@@ -27,7 +27,8 @@ assign {nCS, COPI, SCLK} = cdc_reg_2;
 // logic for doing a transaction
 reg [15:0] dataBuffer;
 reg [3:0] transaction_counter;
-reg old_nCS, nCS_posedge, old_SCLK, SCLK_posedge, transaction_complete, transaction_processed;
+reg old_nCS, nCS_posedge, old_SCLK, SCLK_posedge, transaction_complete;
+wire transaction_processed = nCS_posedge && transaction_counter == 4'd16;
 
 always @(posedge clk or negedge rst_n) begin
     if (~rst_n) begin
@@ -57,7 +58,7 @@ always @(posedge clk or negedge rst_n) begin
                 transaction_complete <= 1'b0;
                 transaction_counter <= transaction_counter + 1;
 
-                if(transaction_counter == 5'b0) begin
+                if(transaction_counter == 4'b0) begin
                     dataBuffer <= dataBuffer | {15'b0, COPI};
                 end else begin
                     dataBuffer <= (dataBuffer << 1) | {15'b0, COPI};
@@ -83,7 +84,6 @@ wire [7:0] data_bits = dataBuffer[7:0];
 // logic for processing transaction
 always @(posedge clk or negedge rst_n) begin
     if(~rst_n) begin
-        transaction_processed <= 1'b0;
         en_reg_out_7_0  <= 8'b0;
         en_reg_out_15_8 <= 8'b0;
         en_reg_pwm_7_0  <= 8'b0;
@@ -101,9 +101,6 @@ always @(posedge clk or negedge rst_n) begin
                 default: ; // ignore invalid addresses
             endcase
         end
-        transaction_processed <= 1'b1;
-    end else if (~transaction_complete && transaction_processed) begin
-        transaction_processed <= 1'b0;
     end
 end
 
