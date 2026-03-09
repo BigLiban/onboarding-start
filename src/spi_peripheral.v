@@ -27,18 +27,17 @@ assign {nCS, COPI, SCLK} = cdc_reg_2;
 // logic for doing a transaction
 reg [15:0] dataBuffer;
 reg [3:0] transaction_counter;
-reg old_nCS, nCS_posedge, old_SCLK, SCLK_posedge, transaction_complete;
-wire transaction_processed = nCS_posedge && transaction_counter == 4'd16;
+reg old_nCS, old_SCLK;
+wire nCS_posedge = ~old_nCS & nCS;
+wire SCLK_posedge = ~old_SCLK & SCLK;
+wire transaction_complete = nCS_posedge && transaction_counter == 4'd15;
 
 always @(posedge clk or negedge rst_n) begin
     if (~rst_n) begin
         dataBuffer <= 16'b0;
         transaction_counter <= 4'b0;
-        transaction_complete <= 1'b0;
         old_nCS             <= 1'b1;  // active-low nCS
-        nCS_posedge         <= 1'b0;
         old_SCLK            <= 1'b0;
-        SCLK_posedge        <= 1'b0;
         cdc_reg_1           <= 3'b0;
         cdc_reg_2           <= 3'b0;
     end else begin 
@@ -48,28 +47,16 @@ always @(posedge clk or negedge rst_n) begin
 
         // nCS posedge detector
         old_nCS <= nCS;
-        nCS_posedge <= ~old_nCS & nCS;
         // SCLK posedge detector
         old_SCLK <= SCLK;
-        SCLK_posedge <= ~old_SCLK & SCLK;
 
         if(~nCS) begin
             if (SCLK_posedge) begin
-                transaction_complete <= 1'b0;
                 transaction_counter <= transaction_counter + 1;
-
-                if(transaction_counter == 4'b0) begin
-                    dataBuffer <= dataBuffer | {15'b0, COPI};
-                end else begin
-                    dataBuffer <= (dataBuffer << 1) | {15'b0, COPI};
-                end
+                dataBuffer <= {dataBuffer[14:0], COPI}; // wire the older 15 bits + the new bit
             end
         end else begin
-            if (nCS_posedge) begin
-                // transaction has been completed
-                transaction_complete <= 1'b1;
-            end else if (transaction_processed) begin
-                transaction_complete <= 1'b0;
+            if (transaction_complete) begin
                 // clear data buffer for next incoming transaction
                 dataBuffer <= 16'b0;
             end
@@ -89,7 +76,7 @@ always @(posedge clk or negedge rst_n) begin
         en_reg_pwm_7_0  <= 8'b0;
         en_reg_pwm_15_8 <= 8'b0;
         pwm_duty_cycle  <= 8'b0;
-    end else if (transaction_complete && ~transaction_processed) begin
+    end else if (~transaction_complete) begin
         // reads are ignored
         if(rw_bit == WRITE) begin
             case (address_bits)
