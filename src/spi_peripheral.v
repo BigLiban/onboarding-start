@@ -18,9 +18,7 @@ module spi_peripheral (
     output  reg [7:0] pwm_duty_cycle
 );
 
-parameter READ = 0,
-WRITE = 1,
-MAX_ADDRESS = 4;
+parameter WRITE = 1;
 
 reg [2:0] cdc_reg_1, cdc_reg_2;
 wire nCS, COPI, SCLK;
@@ -28,8 +26,8 @@ wire nCS, COPI, SCLK;
 // CDC on inputs
   always @(posedge clk or negedge rst_n) begin
     if (~rst_n) begin
-      cdc_reg_1 <= 2'b0;
-      cdc_reg_2 <= 2'b0;
+      cdc_reg_1 <= 3'b0;
+      cdc_reg_2 <= 3'b0;
     end else begin
       cdc_reg_1 <= {nCS_input, COPI_input, SCLK_input};
       cdc_reg_2 <= cdc_reg_1;
@@ -96,16 +94,14 @@ always @(posedge clk or negedge rst_n) begin
     end else if (transaction_complete && ~transaction_processed) begin
         // reads are ignored
         if(rw_bit == WRITE) begin
-        // any address greater than 0x04 is ignored
-        if(address_bits <= MAX_ADDRESS) begin
             case (address_bits)
                 7'h00 : en_reg_out_7_0  <= data_bits;
                 7'h01 : en_reg_out_15_8 <= data_bits;
                 7'h02 : en_reg_pwm_7_0  <= data_bits;
                 7'h03 : en_reg_pwm_15_8 <= data_bits;
                 7'h04 : pwm_duty_cycle  <= data_bits;
+                default: ; // ignore invalid addresses
             endcase
-        end
         end
         transaction_processed <= 1'b1;
     end else if (~transaction_complete && transaction_processed) begin
