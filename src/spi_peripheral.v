@@ -38,8 +38,8 @@ always @(posedge clk or negedge rst_n) begin
         transaction_counter <= 5'b0;
         old_nCS             <= 1'b1;  // active-low nCS
         old_SCLK            <= 1'b0;
-        cdc_reg_1           <= 3'b0;
-        cdc_reg_2           <= 3'b0;
+        cdc_reg_1           <= 3'b100;
+        cdc_reg_2           <= 3'b100;
     end else begin 
         // CDC on inputs
         cdc_reg_1 <= {nCS_input, COPI_input, SCLK_input};
