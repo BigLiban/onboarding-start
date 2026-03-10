@@ -152,6 +152,9 @@ async def test_spi(dut):
 
     dut._log.info("SPI test completed successfully")
 
+
+
+
 @cocotb.test()
 async def test_pwm_freq(dut):
     dut._log.info("PWM Frequency test")
